@@ -10,4 +10,4 @@ https://as-data-analytics.streamlit.app/
 
 
 ## Screenshoot Dashboard
-([http://url/to/img.png](https://drive.google.com/file/d/118NUzP3LDQmwJWKp3dab4BXDi7trAj4O/view?usp=sharing)https://drive.google.com/file/d/118NUzP3LDQmwJWKp3dab4BXDi7trAj4O/view?usp=sharing)
+<a href="https://drive.google.com/uc?export=view&id=<118NUzP3LDQmwJWKp3dab4BXDi7trAj4O>"><img src="https://drive.google.com/uc?export=view&id=<118NUzP3LDQmwJWKp3dab4BXDi7trAj4O>" style="width: 650px; max-width: 100%; height: auto" title="Click to enlarge picture" />
