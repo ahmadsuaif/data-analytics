@@ -10,4 +10,4 @@ https://as-data-analytics.streamlit.app/
 
 
 ## Screenshoot Dashboard
-https://drive.google.com/file/d/118NUzP3LDQmwJWKp3dab4BXDi7trAj4O/view?usp=sharing
+![alt text](https://github.com/ahmadsuaif/data-analytics/blob/main/ss%20submission.png)https://github.com/ahmadsuaif/data-analytics/blob/main/ss%20submission.png)
