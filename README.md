@@ -11,3 +11,10 @@ pip install numpy pandas scipy matplotlib seaborn jupyter streamlit babel
 ```
 streamlit run dashboard.py
 ```
+
+## Tautan Deployment Dashboard
+https://as-data-analytics.streamlit.app/
+
+
+## Screenshoot Dashboard
+![alt text](http://url/to/img.png)
