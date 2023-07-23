@@ -152,7 +152,7 @@ st.pyplot(fig)
 #E. Metode pembayaran yang paling populer dan yang paling tidak populer
 st.subheader("E. Payment Methods")
 fig, ax = plt.subplots(figsize=(12, 6))
-plt.pie(bypayment_df['Percentage'], labels=bypayment_df['Count'], autopct='%1.1f%%')
+plt.pie(bypayment_df['Percentage'], labels=bypayment_df['payment_type'], autopct='%1.1f%%')
 plt.legend(title='Payment type Distribution');
 st.pyplot(fig)
 
