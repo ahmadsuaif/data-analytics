@@ -4,45 +4,78 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
 import datetime as dt
-from babel.numbers import format_currency
+
 sns.set(style='dark')
-
-#Tahap berikutnya adalah menyiapkan DataFrame yang akan digunakan untuk membuat visualisasi data. Untuk melakukan hal ini, kita perlu membuat beberapa helper function seperti berikut. 
-def create_monthly_orders_df(df):
-    monthly_orders_df = df.resample(rule='M', on='order_purchase_timestamp').agg({
-        "order_id": "nunique",
-        "price": "sum"
-    })
-    monthly_orders_df.index = monthly_orders_df.index.strftime('%Y-%m')
-    monthly_orders_df = monthly_orders_df.reset_index()
-    monthly_orders_df.rename(columns={
-        "order_id": "order_count",
-        "price": "revenue"
-    }, inplace=True)
-    return monthly_orders_df
-
+df= pd.read_csv('all_data.csv')
+#Tahap berikutnya adalah menyiapkan DataFrame yang akan digunakan untuk membuat visualisasi data. Untuk melakukan hal ini, kita perlu membuat beberapa helper function seperti berikut.
+#Q1
 def create_bystate_df(df):
-    bystate_df = df.groupby(by="customer_state").customer_id.nunique().reset_index()
-    bystate_df.rename(columns={
-        "customer_id": "customer_count"
-    }, inplace=True)
+    bystate_df = df.customer_state.value_counts().head()
     return bystate_df
 
+def create_bycity_df(df):
+    bycity_df = df.customer_city.value_counts().head()
+    return bycity_df
+
+#Q2
+def create_category_df1(df):
+    category_df = df.product_category_name_english.value_counts()
+    category_df1 = category_df[:5]
+    return category_df1
+
+def create_category_df2(df):
+    category_df = df.product_category_name_english.value_counts()
+    category_df2 = category_df[-5:]
+    return category_df2
+
+#Q3
+def create_byfreight_df1(df):
+    byfreight_df = df.pivot_table(index=['product_category_name_english'], values=['freight_value'],
+                                         aggfunc='mean')
+    byfreight_df.sort_values(by="freight_value", ascending=False)
+    byfreight_df1 = byfreight_df.sort_values(by="freight_value", ascending=False).head()
+    return byfreight_df1
+
+def create_byfreight_df2(df):
+    byfreight_df = df.pivot_table(index=['product_category_name_english'], values=['freight_value'],
+                                         aggfunc='mean')
+    byfreight_df.sort_values(by="freight_value", ascending=False)
+    byfreight_df2 = byfreight_df.sort_values(by="freight_value", ascending=False).tail()
+    return byfreight_df2
+
+#Q4
+def create_bysellercity_df1(df):
+    bysellercity_df = df.seller_city.value_counts()
+    bysellercity_df1 = bysellercity_df.head()
+    return bysellercity_df1
+
+def create_bysellercity_df2(df):
+    bysellercity_df = df.seller_city.value_counts()
+    bysellercity_df2 = bysellercity_df.tail()
+    return bysellercity_df2
+
+#Q5
+def create_bypayment_df(df):
+    bypayment_df = df['payment_type'].value_counts().reset_index()
+    bypayment_df.columns = ['Payment Type', 'Count']
+    bypayment_df['Percentage'] = round(bypayment_df['Count'] * 100 / bypayment_df['Count'].sum(), 2)
+    return bypayment_df
+
+#Q6-8
 def create_rfm_df(df):
     present_day = df['order_purchase_timestamp'].max() + dt.timedelta(days=2)
-    recency_df= pd.DataFrame(df.groupby(by='customer_unique_id', as_index=False)['order_purchase_timestamp'].max())
-    recency_df['Recency']= recency_df['order_purchase_timestamp'].apply(lambda x: (present_day - x).days)
-    
-    frequency_df = pd.DataFrame(df.groupby(["customer_unique_id"]).agg({"order_id":"nunique"}).reset_index())
-    frequency_df.rename(columns={"order_id":"Frequency"}, inplace=True)
-    
+    recency_df = pd.DataFrame(df.groupby(by='customer_unique_id', as_index=False)['order_purchase_timestamp'].max())
+    recency_df['Recency'] = recency_df['order_purchase_timestamp'].apply(lambda x: (present_day - x).days)
+
+    frequency_df = pd.DataFrame(df.groupby(["customer_unique_id"]).agg({"order_id": "nunique"}).reset_index())
+    frequency_df.rename(columns={"order_id": "Frequency"}, inplace=True)
+
     monetary_df = df.groupby('customer_unique_id', as_index=False)['payment_value'].sum()
     monetary_df.columns = ['customer_unique_id', 'Monetary']
-    
+
     RF_df = recency_df.merge(frequency_df, on='customer_unique_id')
     RFM_df = RF_df.merge(monetary_df, on='customer_unique_id').drop(columns='order_purchase_timestamp')
     return RFM_df
-    
 
 #Nah, setelah menyiapkan beberapa helper function tersebut, tahap berikutnya ialah load berkas all_data.csv sebagai sebuah DataFrame menggunakan kode berikut.
 all_df = pd.read_csv("all_data.csv")
@@ -71,59 +104,61 @@ with st.sidebar:
         value=[min_date, max_date]
     )
 #Nah, start_date dan end_date di atas akan digunakan untuk memfilter all_df. Data yang telah difilter ini selanjutnya akan disimpan dalam main_df
-main_df = all_df[(all_df["order_purchase_timestamp"] >= str(start_date)) & 
+main_df = all_df[(all_df["order_purchase_timestamp"] >= str(start_date)) &
                 (all_df["order_purchase_timestamp"] <= str(end_date))]
-#DataFrame yang telah difilter (main_df) inilah yang digunakan untuk menghasilkan berbagai DataFrame yang dibutuhkan untuk membuat visualisasi data.               
-monthly_orders_df = create_monthly_orders_df(main_df)
-bystate_df = create_bystate_df(main_df)
-RFM_df = create_rfm_df(main_df)
 
 ##Melengkapi Dashboard dengan Berbagai Visualisasi Data
 #Header
 st.header('Data Analysis Dashboard :sparkles:')
-#a. Sub Header (informasi tentang jumlah order bulanan ditampilkan dalam bentuk visualisasi data)
-st.subheader('Monthly Orders')
- 
-col1, col2 = st.columns(2)
-with col1:
-    total_orders = monthly_orders_df.order_count.sum()
-    st.metric("Total orders", value=total_orders)
-with col2:
-    total_revenue = format_currency(monthly_orders_df.revenue.sum(), "$", locale='es_CO')
-    st.metric("Total Revenue", value=total_revenue)
+bystate_df = create_bystate_df(df)
+bycity_df = create_bycity_df(df)
+category_df1 = create_category_df1(df)
+category_df2 = create_category_df2(df)
+byfreight_df1 = create_byfreight_df1(df)
+byfreight_df2 = create_byfreight_df2(df)
+bysellercity_df1 = create_bysellercity_df1(df)
+bysellercity_df2 = create_bysellercity_df2(df)
+bypayment_df = create_bypayment_df(df)
+RFM_df = create_rfm_df(main_df)
 
-fig, ax = plt.subplots(figsize=(16, 8))
-ax.plot(
-    monthly_orders_df["order_purchase_timestamp"],
-    monthly_orders_df["order_count"],
-    marker='o', 
-    linewidth=2,
-    color="#90CAF9"
-)
-ax.tick_params(axis='y', labelsize=20)
-ax.tick_params(axis='x', labelsize=15)
+#A. Demografi pelanggan
+st.subheader("A. Demografi Pelanggan")
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(6, 8))
+bystate_df.plot(kind='bar',title='Top 5 states with most orders',figsize=(18, 8), ax=ax[0]);
+bycity_df.plot(kind='bar',title='Top 5 city with most orders',figsize=(18, 8), ax=ax[1]);
 st.pyplot(fig)
 
-#b. Demografi pelanggan yang kita miliki
-fig, ax = plt.subplots(figsize=(20, 10))
-colors = ["#90CAF9", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3"]
-sns.barplot(
-    x="customer_count", 
-    y="customer_state",
-    data=bystate_df.sort_values(by="customer_count", ascending=False),
-    palette=colors,
-    ax=ax
-)
-ax.set_title("Number of Customer by States", loc="center", fontsize=30)
-ax.set_ylabel(None)
-ax.set_xlabel(None)
-ax.tick_params(axis='y', labelsize=20)
-ax.tick_params(axis='x', labelsize=15)
+#B. Kategori produk yang paling banyak dan paling sedikit
+st.subheader("B. Kategori Produk")
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(6, 8))
+category_df1.plot(kind='bar', title='Top 5 product category', figsize=(18, 8), ax=ax[0]);
+category_df2.plot(kind='bar', title='Bottom 5 product category', figsize=(18, 8), ax=ax[1]);
 st.pyplot(fig)
 
-#c. RFM (Recency, Frequency, & Monetary)
-st.subheader("RFM Analysis")
- 
+#C. Freight value berdasarkan kategori produk yang paling besar dan paling kecil?
+st.subheader("C. Freight Value")
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(6, 8))
+byfreight_df1.plot(kind='bar', title='Top 5 freight value', figsize=(18, 8), ax=ax[0]);
+byfreight_df2.plot(kind='bar', title='Bottom 5 freight value', figsize=(18, 8), ax=ax[1]);
+st.pyplot(fig)
+
+#D. Kota dengan jumlah penjual terbanyak dan tersedikit
+st.subheader("D. Number of Sellers")
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(6, 8))
+bysellercity_df1.plot(kind='bar', title='Top 5 city with most sellers', figsize=(18, 8), ax=ax[0]);
+bysellercity_df2.plot(kind='bar', title='Bottom 5 city with least sellers', figsize=(18, 8), ax=ax[1]);
+st.pyplot(fig)
+
+#E. Metode pembayaran yang paling populer dan yang paling tidak populer
+st.subheader("E. Payment Methods")
+fig, ax = plt.subplots(figsize=(12, 6))
+plt.pie(bypayment_df['Percentage'], labels=bypayment_df['Count'], autopct='%1.1f%%')
+plt.legend(title='Payment type Distribution');
+st.pyplot(fig)
+
+#F. RFM (Recency, Frequency, & Monetary)
+st.subheader("F. RFM Analysis")
+
 fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(6, 8))
 plt.subplots_adjust(hspace=1)
 colors = ["#90CAF9", "#90CAF9", "#90CAF9", "#90CAF9", "#90CAF9"]
